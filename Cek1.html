@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Savings | Roza Mrenda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; font-size: 13px; }
+        .glass-card { background: white; border-radius: 24px; border: 1px solid #e2e8f0; page-break-inside: avoid; }
+        .premium-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .dynamic-text { font-size: clamp(1.5rem, 5vw, 2.25rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+        .toast { background: #0f172a; color: white; padding: 12px 24px; border-radius: 12px; font-size: 11px; font-weight: 800; margin-top: 8px; transform: translateY(100px); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        .select-tile { transition: all 0.2s; border: 1px solid #f1f5f9; cursor: pointer; }
+        .tile-asset-active { border: 2px solid #0f172a !important; background: #f1f5f9 !important; }
+        .tile-disabled { opacity: 0.2; cursor: not-allowed !important; filter: grayscale(1); pointer-events: none; }
+        
+        .tile-user-active-roza { border-color: #6366f1 !important; background: #eef2ff !important; color: #4338ca !important; }
+        .tile-user-active-mrenda { border-color: #f43f5e !important; background: #fff1f2 !important; color: #be123c !important; }
+
+        .drilldown-area { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; opacity: 0; }
+        .drilldown-area.open { max-height: 1000px; opacity: 1; margin-top: 1rem; }
+        .hidden-modal { opacity: 0; pointer-events: none; }
+
+        .input-return { transition: all 0.2s; border: 1px solid #e2e8f0; }
+        .input-return:focus { border-color: #10b981; ring: 2px; ring-color: #d1fae5; outline: none; background: #f0fdf4; }
+        
+        .tab-btn { transition: all 0.3s; border-bottom: 2px solid transparent; }
+        .tab-active { border-bottom: 2px solid #0f172a; color: #0f172a; }
+    </style>
+</head>
+<body class="antialiased min-h-screen pb-20">
+
+    <div id="toast-container"></div>
+
+    <div id="custom-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden-modal px-6 transition-opacity">
+        <div class="bg-white w-full max-w-[320px] rounded-3xl p-8 shadow-2xl text-center border border-slate-100">
+            <h3 id="modal-title" class="text-xs font-black uppercase mb-2 tracking-widest text-slate-400">Konfirmasi</h3>
+            <p id="modal-message" class="text-xs text-slate-600 mb-8 font-semibold leading-relaxed"></p>
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-3 rounded-2xl bg-slate-100 text-[10px] font-black uppercase text-slate-400">Batal</button>
+                <button id="modal-confirm-btn" class="flex-1 py-3 rounded-2xl bg-rose-500 text-white text-[10px] font-black uppercase">Eksekusi</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="content-to-export" class="max-w-5xl mx-auto pt-8 px-4">
+        <main class="space-y-6">
+            
+            <section class="premium-gradient rounded-[36px] p-8 text-white shadow-2xl relative overflow-hidden">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 relative z-10">
+                    <div>
+                        <h1 class="text-2xl font-black tracking-tighter italic uppercase leading-none">Our<span class="text-indigo-400">Savings.</span></h1>
+                        <p class="text-[8px] text-slate-500 font-bold uppercase tracking-[0.4em] mt-1">Investment Report</p>
+                    </div>
+                    <div class="flex gap-2 no-print">
+                        <button onclick="exportJSON()" class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-[9px] font-black uppercase">Export</button>
+                        <button onclick="document.getElementById('importFile').click()" class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-[9px] font-black uppercase">Import</button>
+                        <input type="file" id="importFile" class="hidden" onchange="importJSON(this)">
+                        <button onclick="downloadPDF()" class="px-4 py-2 bg-indigo-500 text-white rounded-xl text-[9px] font-black uppercase shadow-lg shadow-indigo-500/30">Download PDF</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                    <div>
+                        <p class="text-slate-500 font-bold mb-1 uppercase tracking-widest text-[9px]">Total Tabungan + Return</p>
+                        <div class="flex items-center gap-3">
+                            <h2 id="total-net-worth" class="dynamic-text font-black tracking-tighter">Rp 0</h2>
+                            <span id="total-return-percent-global" class="text-emerald-400 font-black text-xs italic bg-emerald-500/10 px-3 py-1 rounded-full shrink-0">0%</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-10">
+                        <div><p class="text-[9px] text-slate-500 font-bold uppercase mb-1">Total Tabungan</p><p id="total-deposit" class="text-lg font-bold italic text-slate-200 truncate">Rp 0</p></div>
+                        <div><p class="text-[9px] text-slate-500 font-bold uppercase mb-1">Return</p><p class="text-lg font-bold text-emerald-400 italic truncate">+ <span id="total-all-return">0</span></p></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="glass-card p-6 no-print shadow-sm">
+                <div class="flex gap-6 mb-6 border-b border-slate-50">
+                    <button onclick="setMode('save')" id="tab-save" class="tab-btn pb-3 text-[10px] font-black uppercase tracking-widest tab-active">Nabung</button>
+                    <button onclick="setMode('transfer')" id="tab-transfer" class="tab-btn pb-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Pindah Dana</button>
+                </div>
+
+                <form id="wealth-form" class="grid grid-cols-1 md:grid-cols-12 gap-8">
+                    <div class="md:col-span-4 space-y-4">
+                        <div><label class="text-[9px] font-bold text-slate-500 uppercase ml-1">Tanggal</label>
+                        <input type="date" id="in-date" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold outline-none"></div>
+                        <div>
+                            <label id="label-amount" class="text-[9px] font-bold text-slate-500 uppercase ml-1">Nominal</label>
+                            <input type="text" id="in-amount-display" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xl font-black text-indigo-600 outline-none">
+                            <p id="available-balance-info" class="hidden text-[9px] font-black text-rose-500 mt-2 ml-1 uppercase tracking-tighter italic">Saldo Tersedia: Rp 0</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <div onclick="selectUser('Roza')" id="tile-roza" class="select-tile flex-1 py-3 rounded-xl text-center font-black text-[9px] uppercase">Roza</div>
+                            <div onclick="selectUser('Mrenda')" id="tile-mrenda" class="select-tile flex-1 py-3 rounded-xl text-center font-black text-[9px] uppercase">Mrenda</div>
+                        </div>
+                    </div>
+                    <div class="md:col-span-8 space-y-5">
+                        <div id="asset-selection-container">
+                            <label id="label-asset-main" class="text-[9px] font-bold text-slate-500 uppercase ml-1">Pilih Instrumen</label>
+                            <div class="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-1" id="asset-tiles"></div>
+                        </div>
+                        
+                        <div id="transfer-dest-container" class="hidden animate-in fade-in duration-500">
+                            <label class="text-[9px] font-bold text-slate-500 uppercase ml-1 text-rose-500">Pindah Ke Instrumen</label>
+                            <div class="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-1" id="asset-tiles-dest"></div>
+                        </div>
+
+                        <div><input type="text" id="in-note" placeholder="Tambahkan catatan..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs italic outline-none"></div>
+                        <button type="submit" id="btn-submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest hover:bg-black transition-all">Simpan Transaksi</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="grid grid-cols-1 gap-4">
+                <div class="glass-card p-6">
+                    <div onclick="toggleDrilldown('Roza')" class="flex justify-between items-center cursor-pointer no-print">
+                        <div class="flex flex-col"><span class="text-[11px] font-black text-slate-800 uppercase">Kontribusi Roza</span><p id="sub-roza" class="text-[9px] text-slate-400 font-bold uppercase"></p></div>
+                        <span id="percent-val-roza" class="text-indigo-600 font-black text-xs bg-indigo-50 px-3 py-1 rounded-full">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mt-3"><div id="bar-roza" class="bg-indigo-600 h-full transition-all duration-1000" style="width:0%"></div></div>
+                    <div id="drilldown-roza" class="drilldown-area"></div>
+                </div>
+                <div class="glass-card p-6">
+                    <div onclick="toggleDrilldown('Mrenda')" class="flex justify-between items-center cursor-pointer no-print">
+                        <div class="flex flex-col"><span class="text-[11px] font-black text-slate-800 uppercase">Kontribusi Mrenda</span><p id="sub-mrenda" class="text-[9px] text-slate-400 font-bold uppercase"></p></div>
+                        <span id="percent-val-mre" class="text-rose-500 font-black text-xs bg-rose-50 px-3 py-1 rounded-full">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mt-3"><div id="bar-mre" class="bg-rose-500 h-full transition-all duration-1000" style="width:0%"></div></div>
+                    <div id="drilldown-mrenda" class="drilldown-area"></div>
+                </div>
+            </section>
+
+            <section class="space-y-4">
+                <h3 class="px-2 text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                    <span class="w-1.5 h-4 bg-indigo-600 rounded-full"></span> Asset Performance
+                </h3>
+                <div class="glass-card overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-[11px] min-w-[700px]">
+                            <thead class="bg-slate-50/80 border-b border-slate-100"><tr class="text-slate-400 text-[9px] uppercase font-black">
+                                <th class="px-8 py-5">Instrumen</th><th class="px-8 py-5 text-right">Modal Pokok</th><th class="px-8 py-5 text-right">Return (IDR)</th><th class="px-8 py-5 text-center">ROI</th><th class="px-8 py-5">Mix Ratio</th>
+                            </tr></thead>
+                            <tbody id="summary-table-body" class="divide-y divide-slate-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="space-y-4 pb-20 no-print">
+                <div class="flex justify-between px-2"><h3 class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2"><span class="w-1.5 h-4 bg-rose-500 rounded-full"></span> Recent Activity</h3><button onclick="confirmWipe()" class="text-[9px] text-rose-300 font-black uppercase">Wipe Data</button></div>
+                <div id="transaction-history" class="grid gap-3"></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let transactions = JSON.parse(localStorage.getItem('ec_v17')) || [];
+        let returns = JSON.parse(localStorage.getItem('ec_ret_v17')) || { "Emas":0, "Reksadana":0, "Obligasi FR":0, "Saham":0, "Deposito":0 };
+        const assetList = [{id:"Emas", icon:"✨"}, {id:"Reksadana", icon:"📈"}, {id:"Obligasi FR", icon:"🏛️"}, {id:"Saham", icon:"📊"}, {id:"Deposito", icon:"💰"}];
+        let selectedUser = "Roza", selectedAsset = "Emas", selectedAssetDest = "Reksadana", editId = null, pendingAction = null, currentMode = "save";
+
+        const fmtIDR = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n).replace("Rp", "Rp ");
+        const fmtNum = (n) => n.toString().replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        const parseNum = (s) => parseFloat(s.toString().replace(/\./g, "")) || 0;
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'toast'; toast.innerText = msg;
+            document.getElementById('toast-container').appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 50);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3000);
+        }
+
+        const getFileName = (prefix) => {
+            const d = new Date();
+            return `${prefix}_${String(d.getDate()).padStart(2, '0')}_${String(d.getMonth() + 1).padStart(2, '0')}_${d.getFullYear()}`;
+        };
+
+        function updateBalanceInfo() {
+            const infoEl = document.getElementById('available-balance-info');
+            if(currentMode === 'transfer') {
+                let currentBalance = 0;
+                transactions.forEach(t => {
+                    if(t.user === selectedUser && t.asset === selectedAsset) {
+                        currentBalance += t.amount;
+                    }
+                });
+                infoEl.innerText = `Saldo Tersedia: ${fmtIDR(currentBalance)}`;
+                infoEl.classList.remove('hidden');
+            } else {
+                infoEl.classList.add('hidden');
+            }
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            const tabSave = document.getElementById('tab-save');
+            const tabTransfer = document.getElementById('tab-transfer');
+            const destContainer = document.getElementById('transfer-dest-container');
+            const labelMain = document.getElementById('label-asset-main');
+            const btnSubmit = document.getElementById('btn-submit');
+
+            if(mode === 'transfer') {
+                tabSave.classList.remove('tab-active'); tabSave.classList.add('text-slate-400');
+                tabTransfer.classList.add('tab-active'); tabTransfer.classList.remove('text-slate-400');
+                destContainer.classList.remove('hidden');
+                labelMain.innerText = "Pindah Dari Instrumen";
+                btnSubmit.innerText = "Eksekusi Perpindahan Dana";
+                btnSubmit.className = "w-full bg-rose-600 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all";
+                initTilesDest();
+            } else {
+                tabTransfer.classList.remove('tab-active'); tabTransfer.classList.add('text-slate-400');
+                tabSave.classList.add('tab-active'); tabSave.classList.remove('text-slate-400');
+                destContainer.classList.add('hidden');
+                labelMain.innerText = "Pilih Instrumen";
+                btnSubmit.innerText = "Simpan Transaksi";
+                btnSubmit.className = "w-full bg-slate-900 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest hover:bg-black transition-all";
+            }
+            updateBalanceInfo();
+        }
+
+        function openModal(t, m, c) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-message').innerText=m; document.getElementById('custom-modal').classList.remove('hidden-modal'); pendingAction=c; }
+        function closeModal() { document.getElementById('custom-modal').classList.add('hidden-modal'); }
+        document.getElementById('modal-confirm-btn').onclick = () => { if(pendingAction) pendingAction(); closeModal(); };
+
+        function initTiles() {
+            const container = document.getElementById('asset-tiles'); container.innerHTML = "";
+            assetList.forEach(a => {
+                const div = document.createElement('div');
+                div.id = `tile-asset-${a.id}`;
+                div.className = "select-tile p-3 rounded-2xl flex flex-col items-center gap-1 font-black text-[9px] uppercase";
+                div.innerHTML = `<span class="text-xl pointer-events-none">${a.icon}</span>${a.id}`;
+                div.onclick = () => selectAsset(a.id);
+                container.appendChild(div);
+            });
+            selectUser('Roza'); selectAsset('Emas');
+        }
+
+        function initTilesDest() {
+            const container = document.getElementById('asset-tiles-dest'); container.innerHTML = "";
+            assetList.forEach(a => {
+                const div = document.createElement('div');
+                div.id = `tile-dest-${a.id}`;
+                div.className = "select-tile p-3 rounded-2xl flex flex-col items-center gap-1 font-black text-[9px] uppercase";
+                div.innerHTML = `<span class="text-xl pointer-events-none">${a.icon}</span>${a.id}`;
+                div.onclick = () => selectAssetDest(a.id);
+                container.appendChild(div);
+            });
+            updateDestTilesState();
+        }
+
+        function updateDestTilesState() {
+            if(currentMode !== 'transfer') return;
+            assetList.forEach(a => {
+                const el = document.getElementById(`tile-dest-${a.id}`);
+                if(!el) return;
+                
+                if(a.id === selectedAsset) {
+                    el.classList.add('tile-disabled');
+                    el.classList.remove('tile-asset-active');
+                    // Jika yang terpilih saat ini sama dengan pengirim, pindahkan pilihan tujuan ke aset lain
+                    if(selectedAssetDest === selectedAsset) {
+                        const firstDifferent = assetList.find(x => x.id !== selectedAsset);
+                        if(firstDifferent) selectAssetDest(firstDifferent.id);
+                    }
+                } else {
+                    el.classList.remove('tile-disabled');
+                    if(a.id === selectedAssetDest) el.classList.add('tile-asset-active');
+                }
+            });
+        }
+
+        function selectUser(u) {
+            selectedUser = u;
+            document.getElementById('tile-roza').className = u==='Roza'?'select-tile flex-1 py-3 rounded-xl text-center font-black text-[9px] uppercase tile-user-active-roza':'select-tile flex-1 py-3 rounded-xl text-center font-black text-[9px] uppercase';
+            document.getElementById('tile-mrenda').className = u==='Mrenda'?'select-tile flex-1 py-3 rounded-xl text-center font-black text-[9px] uppercase tile-user-active-mrenda':'select-tile flex-1 py-3 rounded-xl text-center font-black text-[9px] uppercase';
+            updateBalanceInfo();
+        }
+
+        function selectAsset(a) {
+            selectedAsset = a;
+            assetList.forEach(item => document.getElementById(`tile-asset-${item.id}`).classList.remove('tile-asset-active'));
+            document.getElementById(`tile-asset-${a}`).classList.add('tile-asset-active');
+            updateDestTilesState();
+            updateBalanceInfo();
+        }
+
+        function selectAssetDest(a) {
+            if(a === selectedAsset) return;
+            selectedAssetDest = a;
+            assetList.forEach(item => {
+                const el = document.getElementById(`tile-dest-${item.id}`);
+                if(el) el.classList.remove('tile-asset-active');
+            });
+            const selectedEl = document.getElementById(`tile-dest-${a}`);
+            if(selectedEl) selectedEl.classList.add('tile-asset-active');
+        }
+
+        function toggleDrilldown(user) {
+            document.getElementById(`drilldown-${user.toLowerCase()}`).classList.toggle('open');
+            renderDrilldown(user);
+        }
+
+        function renderDrilldown(user) {
+            const content = document.getElementById(`drilldown-${user.toLowerCase()}`);
+            let userTotal = 0; const stats = {}; assetList.forEach(a => stats[a.id] = 0);
+            transactions.forEach(t => { if(t.user === user) { userTotal += t.amount; stats[t.asset] += t.amount; }});
+            content.innerHTML = `<div class="pt-4 border-t border-slate-50 mt-4"></div>`;
+            assetList.forEach(a => {
+                const pct = userTotal > 0 ? (stats[a.id] / userTotal) * 100 : 0;
+                content.innerHTML += `<div class="mb-4">
+                    <div class="flex justify-between text-[10px] font-black uppercase mb-1"><span>${a.id}</span><span class="text-slate-400">${fmtIDR(stats[a.id])} (${Math.round(pct)}%)</span></div>
+                    <div class="w-full h-1.5 bg-slate-50 rounded-full overflow-hidden"><div class="${user==='Roza'?'bg-indigo-600':'bg-rose-500'} h-full" style="width:${pct}%"></div></div>
+                </div>`;
+            });
+        }
+
+        document.getElementById('in-amount-display').addEventListener('input', (e) => e.target.value = fmtNum(e.target.value));
+
+        document.getElementById('wealth-form').onsubmit = (e) => {
+            e.preventDefault();
+            const amt = parseNum(document.getElementById('in-amount-display').value);
+            const date = document.getElementById('in-date').value;
+            const note = document.getElementById('in-note').value || '-';
+            
+            if(amt <= 0) return;
+
+            if(currentMode === 'transfer') {
+                if(selectedAsset === selectedAssetDest) {
+                    showToast("Transfer gagal: Instrumen tidak boleh sama!"); 
+                    return;
+                }
+
+                let currentBalance = 0;
+                transactions.forEach(t => {
+                    if(t.user === selectedUser && t.asset === selectedAsset) {
+                        currentBalance += t.amount;
+                    }
+                });
+
+                if(amt > currentBalance) {
+                    showToast(`Saldo tidak cukup! Max: ${fmtIDR(currentBalance)}`);
+                    return;
+                }
+
+                const baseId = Date.now();
+                transactions.push({ id: baseId, date, user: selectedUser, asset: selectedAsset, amount: -amt, note: `[OUT] Pindah ke ${selectedAssetDest}: ${note}` });
+                transactions.push({ id: baseId+1, date, user: selectedUser, asset: selectedAssetDest, amount: amt, note: `[IN] Pindah dari ${selectedAsset}: ${note}` });
+                showToast("Transfer Berhasil!");
+            } else {
+                const data = { id: editId || Date.now(), date, user: selectedUser, asset: selectedAsset, amount: amt, note };
+                if(editId) { transactions[transactions.findIndex(t => t.id === editId)] = data; editId = null; showToast("Data Updated!"); }
+                else { transactions.push(data); showToast("Data Saved!"); }
+            }
+            
+            save(); e.target.reset(); document.getElementById('in-amount-display').value = ""; setMode('save');
+        };
+
+        function save() { localStorage.setItem('ec_v17', JSON.stringify(transactions)); localStorage.setItem('ec_ret_v17', JSON.stringify(returns)); render(); }
+
+        function render() {
+            let totalDepo=0, totalProfit=0, totalRoza=0, totalMre=0;
+            const stats = {}; assetList.forEach(a => stats[a.id] = { total: 0, roza: 0, mre: 0 });
+            
+            transactions.forEach(t => {
+                totalDepo += t.amount; stats[t.asset].total += t.amount;
+                if(t.user === 'Roza') { totalRoza += t.amount; stats[t.asset].roza += t.amount; }
+                else { totalMre += t.amount; stats[t.asset].mre += t.amount; }
+            });
+
+            const tbody = document.getElementById('summary-table-body');
+            tbody.innerHTML = "";
+            assetList.forEach(a => {
+                const s = stats[a.id]; const ret = returns[a.id]; totalProfit += ret;
+                const roi = s.total > 0 ? ((ret/s.total)*100).toFixed(1) : 0;
+                const pR = s.total > 0 ? (s.roza/s.total)*100 : 0;
+                
+                tbody.innerHTML += `<tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="px-8 py-5 font-black text-slate-700 uppercase">${a.id}</td>
+                    <td class="px-8 py-5 text-right font-bold text-slate-400">${fmtIDR(s.total)}</td>
+                    <td class="px-8 py-5 text-right no-print">
+                        <input type="text" value="${fmtNum(ret)}" 
+                            onfocus="this.value=''; this.select();" 
+                            oninput="this.value=fmtNum(this.value)" 
+                            onblur="returns['${a.id}']=parseNum(this.value); save();" 
+                            class="input-return w-28 text-right bg-white rounded-lg p-2 font-black text-emerald-600">
+                    </td>
+                    <td class="px-8 py-5 text-right hidden print:table-cell font-black text-emerald-600">${fmtIDR(ret)}</td>
+                    <td class="px-8 py-5 text-center font-black text-indigo-600">${roi}%</td>
+                    <td class="px-8 py-5">
+                        <div class="w-24 h-2 ${s.total <= 0 ? 'bg-slate-200' : 'bg-slate-100'} rounded-full flex overflow-hidden">
+                            ${s.total > 0 ? `<div class="bg-indigo-600 h-full" style="width:${pR}%"></div><div class="bg-rose-500 h-full" style="width:${100-pR}%"></div>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+            });
+
+            document.getElementById('total-deposit').innerText = fmtIDR(totalDepo);
+            document.getElementById('total-all-return').innerText = fmtIDR(totalProfit).replace("Rp ", "");
+            document.getElementById('total-net-worth').innerText = fmtIDR(totalDepo + totalProfit);
+            document.getElementById('total-return-percent-global').innerText = (totalDepo > 0 ? ((totalProfit/totalDepo)*100).toFixed(1) : 0) + "%";
+            
+            const gTot = totalRoza + totalMre;
+            document.getElementById('percent-val-roza').innerText = Math.round(gTot > 0 ? (totalRoza/gTot)*100 : 0) + "%";
+            document.getElementById('percent-val-mre').innerText = Math.round(gTot > 0 ? (totalMre/gTot)*100 : 0) + "%";
+            document.getElementById('sub-roza').innerText = fmtIDR(totalRoza);
+            document.getElementById('sub-mrenda').innerText = fmtIDR(totalMre);
+            document.getElementById('bar-roza').style.width = (gTot > 0 ? (totalRoza/gTot)*100 : 0) + "%";
+            document.getElementById('bar-mre').style.width = (gTot > 0 ? (totalMre/gTot)*100 : 0) + "%";
+
+            const hist = document.getElementById('transaction-history');
+            hist.innerHTML = "";
+            transactions.slice().reverse().forEach(t => {
+                const isTransfer = t.note.includes('[OUT]') || t.note.includes('[IN]');
+                hist.innerHTML += `<div class="glass-card p-4 flex justify-between items-center border-l-4 ${t.user==='Roza'?'border-l-indigo-600':'border-l-rose-500'}">
+                    <div class="flex items-center gap-4"><span class="text-[9px] font-black text-slate-300 uppercase">${t.date.split('-').slice(1).reverse().join('/')}</span>
+                    <div><div class="text-[10px] font-black text-slate-800 uppercase">${t.asset} | ${t.user}</div><div class="text-[9px] text-slate-400 italic">"${t.note}"</div></div></div>
+                    <div class="flex gap-4 items-center"><div class="text-[11px] font-black ${t.amount < 0 ? 'text-rose-500' : 'text-slate-800'}">${fmtIDR(t.amount)}</div>
+                    <div class="flex gap-2 no-print">
+                        ${!isTransfer ? `<button onclick="editT(${t.id})" class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">✎</button>` : ''}
+                        <button onclick="confirmD(${t.id})" class="p-2 bg-rose-50 text-rose-600 rounded-lg">✕</button>
+                    </div></div></div>`;
+            });
+            
+            if(document.getElementById('drilldown-roza').classList.contains('open')) renderDrilldown('Roza');
+            if(document.getElementById('drilldown-mrenda').classList.contains('open')) renderDrilldown('Mrenda');
+            updateBalanceInfo();
+        }
+
+        function editT(id) { 
+            const t = transactions.find(i => i.id === id); 
+            setMode('save');
+            document.getElementById('in-date').value = t.date; 
+            document.getElementById('in-amount-display').value = fmtNum(t.amount); 
+            document.getElementById('in-note').value = t.note; 
+            selectUser(t.user); selectAsset(t.asset); editId = id; 
+            document.getElementById('btn-submit').innerText = "Update Entry";
+            window.scrollTo({top:200, behavior:'smooth'});
+        }
+
+        function confirmD(id) { openModal("Hapus Data?", "Yakin ingin menghapus transaksi ini?", () => { transactions = transactions.filter(t => t.id !== id); save(); showToast("Deleted!"); }); }
+        function confirmWipe() { openModal("Reset Database?", "Hapus seluruh data portfolio?", () => { transactions = []; Object.keys(returns).forEach(k => returns[k] = 0); save(); showToast("Database Wiped!"); }); }
+        
+        function exportJSON() { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify({ transactions, returns })], { type: "application/json" })); a.download = `${getFileName('Backup')}.json`; a.click(); showToast("Backup Created!"); }
+        function importJSON(i) { const r = new FileReader(); r.onload = (e) => { const d = JSON.parse(e.target.result); transactions = d.transactions; returns = d.returns; save(); showToast("Import Success!"); }; r.readAsText(i.files[0]); }
+
+        async function downloadPDF() { 
+            showToast("Generating PDF...");
+            const roza = document.getElementById('drilldown-roza');
+            const mre = document.getElementById('drilldown-mrenda');
+            const wasRozaOpen = roza.classList.contains('open');
+            const wasMreOpen = mre.classList.contains('open');
+            roza.classList.add('open'); renderDrilldown('Roza');
+            mre.classList.add('open'); renderDrilldown('Mrenda');
+
+            const element = document.getElementById('content-to-export');
+            const opt = { margin: 10, filename: `${getFileName('Laporan')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: 'avoid-all' } };
+            await html2pdf().set(opt).from(element).save();
+
+            if(!wasRozaOpen) roza.classList.remove('open');
+            if(!wasMreOpen) mre.classList.remove('open');
+            showToast("PDF Downloaded!");
+        }
+
+        window.onload = () => { initTiles(); render(); };
+    </script>
+</body>
+</html>
