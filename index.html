@@ -21,6 +21,27 @@
         .drilldown-content.open { grid-template-rows: 1fr; }
         .drilldown-inner { overflow: hidden; }
         .reminder-banner { background: linear-gradient(90deg, #f0f9ff 0%, #fff1f2 100%); border: 1px solid #e2e8f0; }
+
+        /* --- AUTO SCALING FONT SYSTEM --- */
+        .auto-scale-container {
+            display: flex;
+            align-items: baseline;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        /* Menggunakan font-size yang dinamis berdasarkan panjang karakter */
+        #total-net-worth {
+            font-size: clamp(1.5rem, 8vw, 3rem); /* Mengecil otomatis di layar kecil atau teks panjang */
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        #total-deposit, #total-all-return {
+            font-size: clamp(0.9rem, 4vw, 1.125rem);
+            white-space: nowrap;
+            display: inline-block;
+        }
     </style>
 </head>
 <body class="antialiased min-h-screen pb-20">
@@ -46,19 +67,25 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
-                <div>
+                <div class="overflow-hidden">
                     <p class="text-slate-400 font-bold mb-1 uppercase tracking-widest text-[9px]">Total Tabungan + Return</p>
-                    <div class="flex items-center gap-4">
-                        <h2 id="total-net-worth" class="text-4xl md:text-5xl font-black tracking-tighter tabular-nums">Rp 0</h2>
-                        <div class="flex flex-col">
+                    <div class="auto-scale-container gap-4">
+                        <h2 id="total-net-worth" class="font-black tracking-tighter tabular-nums">Rp 0</h2>
+                        <div class="flex flex-col flex-shrink-0">
                             <span id="total-return-percent-global" class="text-emerald-400 font-black text-xs">+0%</span>
                             <span class="text-[8px] text-slate-500 uppercase font-black">ROI</span>
                         </div>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-10">
-                    <div><p class="text-[9px] text-slate-400 font-bold uppercase mb-1">Total Tabungan</p><p id="total-deposit" class="text-lg font-bold text-slate-200">Rp 0</p></div>
-                    <div><p class="text-[9px] text-slate-400 font-bold uppercase mb-1">Total Return</p><p class="text-lg font-bold text-emerald-400">+ <span id="total-all-return">0</span></p></div>
+                    <div class="overflow-hidden">
+                        <p class="text-[9px] text-slate-400 font-bold uppercase mb-1">Total Tabungan</p>
+                        <p id="total-deposit" class="font-bold text-slate-200">Rp 0</p>
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-[9px] text-slate-400 font-bold uppercase mb-1">Total Return</p>
+                        <p class="font-bold text-emerald-400">+ <span id="total-all-return">0</span></p>
+                    </div>
                 </div>
             </div>
         </header>
@@ -156,7 +183,17 @@
         <section class="space-y-4 no-print"><div class="flex justify-between items-center px-2"><h3 class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2"><span class="w-1.5 h-4 bg-rose-500 rounded-full"></span> Aktifitas Terakhir</h3></div><div id="transaction-history" class="grid gap-3"></div></section>
     </div>
 
-    <div id="goal-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden px-6"><div class="bg-white w-full max-w-[320px] rounded-3xl p-8 shadow-2xl"><h3 class="text-[10px] font-black uppercase mb-4 tracking-widest text-slate-400 text-center">Set Yearly Goal</h3><input type="text" id="goal-input" class="w-full input-premium rounded-xl p-3 text-center font-black text-lg mb-6" placeholder="Rp 100.000.000"><div class="flex gap-2"><button onclick="closeGoalModal()" class="flex-1 py-3 rounded-xl bg-slate-100 text-[9px] font-black uppercase">Batal</button><button onclick="saveGoal()" class="flex-1 py-3 rounded-xl bg-indigo-600 text-white text-[9px] font-black uppercase">Simpan</button></div></div></div>
+    <div id="goal-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden px-6">
+        <div class="bg-white w-full max-w-[320px] rounded-3xl p-8 shadow-2xl">
+            <h3 class="text-[10px] font-black uppercase mb-4 tracking-widest text-slate-400 text-center">Set Yearly Goal</h3>
+            <input type="text" id="goal-input" oninput="this.value = fmtNum(this.value)" class="w-full input-premium rounded-xl p-3 text-center font-black text-lg mb-6" placeholder="Rp 100.000.000">
+            <div class="flex gap-2">
+                <button onclick="closeGoalModal()" class="flex-1 py-3 rounded-xl bg-slate-100 text-[9px] font-black uppercase">Batal</button>
+                <button onclick="saveGoal()" class="flex-1 py-3 rounded-xl bg-indigo-600 text-white text-[9px] font-black uppercase">Simpan</button>
+            </div>
+        </div>
+    </div>
+
     <div id="custom-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden px-6"><div class="bg-white w-full max-w-[320px] rounded-3xl p-8 shadow-2xl text-center"><h3 id="modal-title" class="text-xs font-black uppercase mb-2 tracking-widest text-slate-400">Konfirmasi</h3><p id="modal-message" class="text-xs text-slate-600 mb-8 font-semibold"></p><div class="flex gap-3"><button onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-slate-100 text-[10px] font-black uppercase">Batal</button><button id="modal-confirm-btn" class="flex-1 py-3 rounded-xl bg-rose-500 text-white text-[10px] font-black uppercase">Eksekusi</button></div></div></div>
 
     <script>
@@ -171,27 +208,6 @@
         const parseNum = (s) => parseFloat(s.toString().replace(/\./g, "")) || 0;
         function showToast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg; document.getElementById('toast-container').appendChild(t); setTimeout(() => t.remove(), 3000); }
 
-        function confirmWipeAll() {
-            openModal("Reset Seluruh Data?", "Semua transaksi, profit, dan target akan dihapus permanen. Kamu tidak bisa mengembalikan data ini.", () => {
-                transactions = [];
-                returns = { "Emas":0, "Reksadana":0, "Obligasi FR":0, "Saham":0, "Deposito":0 };
-                yearlyGoal = 100000000;
-                save();
-                showToast("Data Berhasil Direset!");
-            });
-        }
-
-        function updateReminder() {
-            const now = new Date(); const currM = now.getMonth(); const currY = now.getFullYear();
-            const rDone = transactions.some(t => t.user === 'Roza' && t.amount > 0 && new Date(t.date).getMonth() === currM && new Date(t.date).getFullYear() === currY);
-            const mDone = transactions.some(t => t.user === 'Mrenda' && t.amount > 0 && new Date(t.date).getMonth() === currM && new Date(t.date).getFullYear() === currY);
-            const title = document.getElementById('reminder-title'); const desc = document.getElementById('reminder-desc'); const banner = document.getElementById('smart-reminder');
-            if (rDone && mDone) { title.innerText = "Goal Tercapai! 🎯"; desc.innerText = "Keduanya sudah menabung bulan ini."; banner.style.background = "linear-gradient(90deg, #f0fdf4 0%, #ecfdf5 100%)"; }
-            else if (rDone) { title.innerText = "Giliran Mrenda! 🚀"; desc.innerText = "Roza sudah setor."; }
-            else if (mDone) { title.innerText = "Giliran Roza! 🚀"; desc.innerText = "Mrenda sudah setor."; }
-            else { title.innerText = "Belum Ada Setoran 📅"; desc.innerText = "Ayo menabung bersama setiap tanggal 21!"; banner.style.background = ""; }
-        }
-
         function render() {
             let totalDepo = 0, totalRoza = 0, totalMre = 0;
             const stats = {}; assetList.forEach(a => stats[a.id] = { total: 0, roza: 0, mre: 0 });
@@ -203,7 +219,18 @@
             });
             const totalProfit = Object.values(returns).reduce((a,b) => a+b, 0);
             const netWorth = totalDepo + totalProfit;
-            document.getElementById('total-net-worth').innerText = fmtIDR(netWorth);
+
+            // Update UI with dynamic scaling check
+            const elNetWorth = document.getElementById('total-net-worth');
+            elNetWorth.innerText = fmtIDR(netWorth);
+            
+            // Adjust font-size if text is extremely long
+            if (elNetWorth.innerText.length > 15) {
+                elNetWorth.style.fontSize = "clamp(1rem, 5vw, 2rem)";
+            } else {
+                elNetWorth.style.fontSize = ""; 
+            }
+
             document.getElementById('total-deposit').innerText = fmtIDR(totalDepo);
             document.getElementById('total-all-return').innerText = isPrivate ? "****" : fmtNum(totalProfit);
             document.getElementById('total-return-percent-global').innerText = (totalDepo > 0 ? ((totalProfit/totalDepo)*100).toFixed(1) : 0) + "%";
@@ -219,10 +246,8 @@
             assetList.forEach(a => {
                 const s = stats[a.id]; const ret = returns[a.id];
                 const roi = s.total > 0 ? ((ret/s.total)*100).toFixed(1) : 0;
-                // Logika Mini Bar Mix Ratio Otomatis
                 const rRatio = s.total > 0 ? (s.roza/s.total)*100 : 50;
                 const mRatio = 100 - rRatio;
-
                 tbody.innerHTML += `
                     <tr>
                         <td class="px-6 py-5 uppercase flex items-center gap-2"><span>${a.icon}</span>${a.id}</td>
@@ -254,39 +279,30 @@
             updateChart(assetList.map(a => stats[a.id].total)); updateReminder(); lucide.createIcons();
         }
 
-        // Logic Form, Chart, UI (Sama seperti sebelumnya)
+        // Logic lainnya dipertahankan sesuai permintaan
+        function confirmWipeAll() { openModal("Reset Seluruh Data?", "Semua transaksi, profit, dan target akan dihapus permanen. Kamu tidak bisa mengembalikan data ini.", () => { transactions = []; returns = { "Emas":0, "Reksadana":0, "Obligasi FR":0, "Saham":0, "Deposito":0 }; yearlyGoal = 100000000; save(); showToast("Data Berhasil Direset!"); }); }
+        function updateReminder() { const now = new Date(); const currM = now.getMonth(); const currY = now.getFullYear(); const rDone = transactions.some(t => t.user === 'Roza' && t.amount > 0 && new Date(t.date).getMonth() === currM && new Date(t.date).getFullYear() === currY); const mDone = transactions.some(t => t.user === 'Mrenda' && t.amount > 0 && new Date(t.date).getMonth() === currM && new Date(t.date).getFullYear() === currY); const title = document.getElementById('reminder-title'); const desc = document.getElementById('reminder-desc'); const banner = document.getElementById('smart-reminder'); if (rDone && mDone) { title.innerText = "Goal Tercapai! 🎯"; desc.innerText = "Keduanya sudah menabung bulan ini."; banner.style.background = "linear-gradient(90deg, #f0fdf4 0%, #ecfdf5 100%)"; } else if (rDone) { title.innerText = "Giliran Mrenda! 🚀"; desc.innerText = "Roza sudah setor."; banner.style.background = ""; } else if (mDone) { title.innerText = "Giliran Roza! 🚀"; desc.innerText = "Mrenda sudah setor."; banner.style.background = ""; } else { title.innerText = "Belum Ada Setoran 📅"; desc.innerText = "Ayo menabung bersama setiap tanggal 21!"; banner.style.background = ""; } }
         function setMode(mode) { currentMode = mode; document.getElementById('tab-save').className = mode === 'save' ? 'pb-3 text-[10px] font-black uppercase tracking-widest border-b-2 border-indigo-600 text-indigo-600' : 'pb-3 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-slate-400'; document.getElementById('tab-transfer').className = mode === 'transfer' ? 'pb-3 text-[10px] font-black uppercase tracking-widest border-b-2 border-rose-500 text-rose-500' : 'pb-3 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-slate-400'; document.getElementById('asset-dest-container').classList.toggle('hidden', mode === 'save'); document.getElementById('btn-submit').innerText = mode === 'save' ? 'Simpan Transaksi' : 'Eksekusi Pindah Dana'; updateBalanceInfo(); if(mode === 'transfer') initTilesDest(); }
         function updateBalanceInfo() { const info = document.getElementById('balance-info'); if(currentMode === 'transfer') { const bal = transactions.filter(t => t.user === selectedUser && t.asset === selectedAsset).reduce((a,b) => a + b.amount, 0); info.innerText = `Saldo ${selectedAsset}: ${fmtIDR(bal)}`; info.classList.remove('hidden'); } else info.classList.add('hidden'); }
         function selectUser(u) { selectedUser = u; document.getElementById('btn-user-roza').className = u === 'Roza' ? 'flex-1 py-3 rounded-xl font-black text-[9px] uppercase border-2 border-indigo-600 bg-indigo-50 text-indigo-600' : 'flex-1 py-3 rounded-xl font-black text-[9px] uppercase border-2 border-slate-100 text-slate-400'; document.getElementById('btn-user-mrenda').className = u === 'Mrenda' ? 'flex-1 py-3 rounded-xl font-black text-[9px] uppercase border-2 border-rose-500 bg-rose-50 text-rose-500' : 'flex-1 py-3 rounded-xl font-black text-[9px] uppercase border-2 border-slate-100 text-slate-400'; updateBalanceInfo(); }
         function initTiles() { const container = document.getElementById('asset-tiles'); container.innerHTML = ""; assetList.forEach(a => { const btn = document.createElement('button'); btn.type = "button"; btn.className = `p-3 rounded-xl border-2 flex flex-col items-center gap-1 font-black text-[8px] uppercase transition-all ${selectedAsset === a.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-50 text-slate-400'}`; btn.innerHTML = `<span class="text-lg">${a.icon}</span>${a.id}`; btn.onclick = () => { selectedAsset = a.id; initTiles(); updateBalanceInfo(); if(currentMode === 'transfer') initTilesDest(); }; container.appendChild(btn); }); }
         function initTilesDest() { const container = document.getElementById('asset-tiles-dest'); container.innerHTML = ""; assetList.forEach(a => { const isSource = a.id === selectedAsset; const btn = document.createElement('button'); btn.type = "button"; btn.className = `p-3 rounded-xl border-2 flex flex-col items-center gap-1 font-black text-[8px] uppercase ${isSource ? 'opacity-20 cursor-not-allowed border-slate-50' : (selectedAssetDest === a.id ? 'border-rose-500 bg-rose-50 text-rose-500' : 'border-slate-50 text-slate-400')}`; btn.innerHTML = `<span class="text-lg">${a.icon}</span>${a.id}`; if(!isSource) btn.onclick = () => { selectedAssetDest = a.id; initTilesDest(); }; container.appendChild(btn); }); }
         function toggleDrilldown() { const content = document.getElementById('drilldown-area'); const icon = document.getElementById('drilldown-icon'); content.classList.toggle('open'); icon.style.transform = content.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)'; if(content.classList.contains('open')) renderDrilldown(); }
-        function renderDrilldown() {
-            const rDiv = document.getElementById('drilldown-roza'); const mDiv = document.getElementById('drilldown-mrenda');
-            const draw = (user, colorClass) => {
-                let total = 0; const aData = {}; assetList.forEach(a => aData[a.id] = 0);
-                transactions.filter(t => t.user === user).forEach(t => { total += t.amount; aData[t.asset] += t.amount; });
-                let html = `<p class="text-[10px] font-black uppercase mb-4 text-slate-800 flex items-center gap-2"><span class="w-2 h-2 rounded-full ${colorClass}"></span>${user} Portfolio</p>`;
-                assetList.forEach(a => { const val = aData[a.id]; const pct = total > 0 ? (val/total)*100 : 0; if(val > 0) { html += `<div class="mb-4"><div class="flex justify-between text-[8px] font-bold uppercase mb-1"><span class="text-slate-700">${a.id}</span><span class="text-slate-400">${fmtIDR(val)} (${Math.round(pct)}%)</span></div><div class="w-full bg-slate-100 h-1 rounded-full"><div class="${colorClass} h-full" style="width:${pct}%"></div></div></div>`; } });
-                return html;
-            };
-            rDiv.innerHTML = draw('Roza', 'bg-indigo-600'); mDiv.innerHTML = draw('Mrenda', 'bg-rose-500');
-        }
+        function renderDrilldown() { const rDiv = document.getElementById('drilldown-roza'); const mDiv = document.getElementById('drilldown-mrenda'); const draw = (user, colorClass) => { let total = 0; const aData = {}; assetList.forEach(a => aData[a.id] = 0); transactions.filter(t => t.user === user).forEach(t => { total += t.amount; aData[t.asset] += t.amount; }); let html = `<p class="text-[10px] font-black uppercase mb-4 text-slate-800 flex items-center gap-2"><span class="w-2 h-2 rounded-full ${colorClass}"></span>${user} Portfolio</p>`; assetList.forEach(a => { const val = aData[a.id]; const pct = total > 0 ? (val/total)*100 : 0; if(val > 0) { html += `<div class="mb-4"><div class="flex justify-between text-[8px] font-bold uppercase mb-1"><span class="text-slate-700">${a.id}</span><span class="text-slate-400">${fmtIDR(val)} (${Math.round(pct)}%)</span></div><div class="w-full bg-slate-100 h-1 rounded-full"><div class="${colorClass} h-full" style="width:${pct}%"></div></div></div>`; } }); return html; }; rDiv.innerHTML = draw('Roza', 'bg-indigo-600'); mDiv.innerHTML = draw('Mrenda', 'bg-rose-500'); }
         function updateChart(data) { const ctx = document.getElementById('assetChart').getContext('2d'); if(assetChart) assetChart.destroy(); assetChart = new Chart(ctx, { type: 'doughnut', data: { labels: assetList.map(a => a.id), datasets: [{ data, backgroundColor: assetList.map(a => a.color), borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, layout: { padding: 10 }, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10, weight: 'bold' } } } } } }); }
-        document.getElementById('wealth-form').onsubmit = (e) => {
-            e.preventDefault(); const amt = parseNum(document.getElementById('in-amount-display').value); const date = document.getElementById('in-date').value; const note = document.getElementById('in-note').value || '-';
-            if(currentMode === 'transfer') {
-                const bal = transactions.filter(t => t.user === selectedUser && t.asset === selectedAsset).reduce((a,b) => a + b.amount, 0); if(amt > bal) return showToast("Saldo tidak cukup!");
-                const tid = Date.now(); transactions.push({ id: tid, date, user: selectedUser, asset: selectedAsset, amount: -amt, note: `[Pindah] Ke ${selectedAssetDest}: ${note}` }); transactions.push({ id: tid+1, date, user: selectedUser, asset: selectedAssetDest, amount: amt, note: `[Pindah] Dari ${selectedAsset}: ${note}` });
-            } else { if(editId) { const idx = transactions.findIndex(t => t.id === editId); transactions[idx] = { id: editId, date, user: selectedUser, asset: selectedAsset, amount: amt, note }; editId = null; } else transactions.push({ id: Date.now(), date, user: selectedUser, asset: selectedAsset, amount: amt, note }); }
-            save(); cancelEdit(); showToast("Berhasil!");
-        };
+        document.getElementById('wealth-form').onsubmit = (e) => { e.preventDefault(); const amt = parseNum(document.getElementById('in-amount-display').value); const date = document.getElementById('in-date').value; const note = document.getElementById('in-note').value || '-'; if(currentMode === 'transfer') { const bal = transactions.filter(t => t.user === selectedUser && t.asset === selectedAsset).reduce((a,b) => a + b.amount, 0); if(amt > bal) return showToast("Saldo tidak cukup!"); const tid = Date.now(); transactions.push({ id: tid, date, user: selectedUser, asset: selectedAsset, amount: -amt, note: `[Pindah] Ke ${selectedAssetDest}: ${note}` }); transactions.push({ id: tid+1, date, user: selectedUser, asset: selectedAssetDest, amount: amt, note: `[Pindah] Dari ${selectedAsset}: ${note}` }); } else { if(editId) { const idx = transactions.findIndex(t => t.id === editId); transactions[idx] = { id: editId, date, user: selectedUser, asset: selectedAsset, amount: amt, note }; editId = null; } else transactions.push({ id: Date.now(), date, user: selectedUser, asset: selectedAsset, amount: amt, note }); } save(); cancelEdit(); showToast("Berhasil!"); };
         function editTx(id) { const t = transactions.find(x => x.id === id); editId = id; setMode('save'); selectUser(t.user); selectedAsset = t.asset; initTiles(); document.getElementById('in-date').value = t.date; document.getElementById('in-amount-display').value = fmtNum(t.amount); document.getElementById('in-note').value = t.note; document.getElementById('btn-submit').innerText = "Update"; document.getElementById('btn-cancel-edit').classList.remove('hidden'); document.getElementById('input-section').scrollIntoView({ behavior: 'smooth' }); }
         function cancelEdit() { editId = null; document.getElementById('wealth-form').reset(); document.getElementById('in-date').valueAsDate = new Date(); document.getElementById('btn-submit').innerText = "Simpan Transaksi"; document.getElementById('btn-cancel-edit').classList.add('hidden'); setMode('save'); }
         function togglePrivacy() { isPrivate = !isPrivate; render(); }
-        function openGoalModal() { document.getElementById('goal-modal').classList.remove('hidden'); document.getElementById('goal-input').value = fmtNum(yearlyGoal); }
+        
+        // MODIFIED: Formatting yearly goal input
+        function openGoalModal() { 
+            document.getElementById('goal-modal').classList.remove('hidden'); 
+            document.getElementById('goal-input').value = fmtNum(yearlyGoal); 
+        }
         function closeGoalModal() { document.getElementById('goal-modal').classList.add('hidden'); }
         function saveGoal() { yearlyGoal = parseNum(document.getElementById('goal-input').value); localStorage.setItem('os_v20_goal', yearlyGoal); render(); closeGoalModal(); }
+        
         function save() { localStorage.setItem('os_v20_tx', JSON.stringify(transactions)); localStorage.setItem('os_v20_ret', JSON.stringify(returns)); render(); }
         function exportJSON() { const blob = new Blob([JSON.stringify({ transactions, returns, yearlyGoal })], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Backup.json`; a.click(); }
         function importJSON(i) { const r = new FileReader(); r.onload = (e) => { const d = JSON.parse(e.target.result); transactions = d.transactions || []; returns = d.returns || { "Emas":0, "Reksadana":0, "Obligasi FR":0, "Saham":0, "Deposito":0 }; yearlyGoal = d.yearlyGoal || 100000000; save(); }; r.readAsText(i.files[0]); }
