@@ -33,7 +33,7 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 relative z-10">
                 <div>
                     <h1 class="text-2xl font-black italic tracking-tighter uppercase">Our<span class="text-indigo-400">Savings.</span></h1>
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-[0.4em] mt-1">Wealth Management</p>
+                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-[0.4em] mt-1">Investment Report</p>
                 </div>
                 <div class="flex flex-wrap gap-2 no-print">
                     <button onclick="togglePrivacy()" class="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all"><i data-lucide="eye" id="privacy-icon" class="w-4 h-4"></i></button>
@@ -47,7 +47,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
                 <div>
-                    <p class="text-slate-400 font-bold mb-1 uppercase tracking-widest text-[9px]">Total Net Worth (Deposit + Return)</p>
+                    <p class="text-slate-400 font-bold mb-1 uppercase tracking-widest text-[9px]">Total Tabungan + Return</p>
                     <div class="flex items-center gap-4">
                         <h2 id="total-net-worth" class="text-4xl md:text-5xl font-black tracking-tighter tabular-nums">Rp 0</h2>
                         <div class="flex flex-col">
@@ -57,7 +57,7 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-10">
-                    <div><p class="text-[9px] text-slate-400 font-bold uppercase mb-1">Total Deposit</p><p id="total-deposit" class="text-lg font-bold text-slate-200">Rp 0</p></div>
+                    <div><p class="text-[9px] text-slate-400 font-bold uppercase mb-1">Total Tabungan</p><p id="total-deposit" class="text-lg font-bold text-slate-200">Rp 0</p></div>
                     <div><p class="text-[9px] text-slate-400 font-bold uppercase mb-1">Total Return</p><p class="text-lg font-bold text-emerald-400">+ <span id="total-all-return">0</span></p></div>
                 </div>
             </div>
@@ -122,7 +122,7 @@
 
         <section class="glass-card p-6 cursor-pointer" onclick="toggleDrilldown()">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-[10px] font-black uppercase tracking-widest">Partnership Contribution</h3>
+                <h3 class="text-[10px] font-black uppercase tracking-widest">Kontribusi</h3>
                 <i data-lucide="chevron-down" id="drilldown-icon" class="w-4 h-4 text-slate-400 transition-transform"></i>
             </div>
             <div class="flex h-3 rounded-full overflow-hidden mb-3">
@@ -133,10 +133,10 @@
             <div id="drilldown-area" class="drilldown-content"><div class="drilldown-inner"><div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-50 mt-4"><div id="drilldown-roza" class="space-y-3"></div><div id="drilldown-mrenda" class="space-y-3"></div></div></div></div>
         </section>
 
-        <section class="glass-card p-6"><h3 class="text-[10px] font-black uppercase tracking-widest mb-6">Asset Allocation Distribution</h3><div class="relative w-full h-[300px]"><canvas id="assetChart"></canvas></div></section>
+        <section class="glass-card p-6"><h3 class="text-[10px] font-black uppercase tracking-widest mb-6">Alokasi Aset</h3><div class="relative w-full h-[300px]"><canvas id="assetChart"></canvas></div></section>
 
         <section class="glass-card overflow-hidden">
-            <div class="p-6 border-b border-slate-50"><h3 class="text-[10px] font-black uppercase tracking-widest">Asset Performance & Returns</h3></div>
+            <div class="p-6 border-b border-slate-50"><h3 class="text-[10px] font-black uppercase tracking-widest">Performa Aset</h3></div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-[11px]">
                     <thead class="bg-slate-50 border-b border-slate-100">
@@ -153,7 +153,7 @@
             </div>
         </section>
 
-        <section class="space-y-4 no-print"><div class="flex justify-between items-center px-2"><h3 class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2"><span class="w-1.5 h-4 bg-rose-500 rounded-full"></span> Recent Activity</h3></div><div id="transaction-history" class="grid gap-3"></div></section>
+        <section class="space-y-4 no-print"><div class="flex justify-between items-center px-2"><h3 class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2"><span class="w-1.5 h-4 bg-rose-500 rounded-full"></span> Aktifitas Terakhir</h3></div><div id="transaction-history" class="grid gap-3"></div></section>
     </div>
 
     <div id="goal-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden px-6"><div class="bg-white w-full max-w-[320px] rounded-3xl p-8 shadow-2xl"><h3 class="text-[10px] font-black uppercase mb-4 tracking-widest text-slate-400 text-center">Set Yearly Goal</h3><input type="text" id="goal-input" class="w-full input-premium rounded-xl p-3 text-center font-black text-lg mb-6" placeholder="Rp 100.000.000"><div class="flex gap-2"><button onclick="closeGoalModal()" class="flex-1 py-3 rounded-xl bg-slate-100 text-[9px] font-black uppercase">Batal</button><button onclick="saveGoal()" class="flex-1 py-3 rounded-xl bg-indigo-600 text-white text-[9px] font-black uppercase">Simpan</button></div></div></div>
